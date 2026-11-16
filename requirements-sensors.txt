@@ -1,0 +1,4 @@
+# Raspberry Pi only: install appropriate Blinka/native Pi GPIO support
+adafruit-circuitpython-dht>=4,<5
+adafruit-blinka>=8,<10
+RPi.GPIO>=0.7,<1

@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bfdbfe 50%, #93c5fd 100%);
+            min-height: 100vh;
+            color: #1e3a8a;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Decorative background elements */
+        .background-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .floating-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            backdrop-filter: blur(40px);
+        }
+
+        .circle-1 {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            right: 15%;
+            animation: float 10s ease-in-out infinite;
+        }
+
+        .circle-2 {
+            width: 200px;
+            height: 200px;
+            bottom: 15%;
+            left: 10%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        .circle-3 {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 5%;
+            animation: float 12s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-30px) translateX(20px); }
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem;
+            border-radius: 50px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            z-index: 10;
+        }
+
+        .nav-item {
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            background: transparent;
+            border: none;
+            color: #1e3a8a;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-item:hover:not(.active) {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 0.75rem 1.5rem;
+            border-radius: 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            z-index: 10;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            color: #1e3a8a;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-online { 
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+        
+        .status-offline { 
+            background: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+
+        /* Content panels */
+        .content-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            z-index: 5;
+            padding: 7rem 3rem 3rem;
+        }
+
+        .content-panel.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* HOME PANEL */
+        .home-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .main-title {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #64748b;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+
+        .time-display {
+            font-size: 2rem;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            color: #475569;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .class-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            animation: fadeInUp 1s ease-out;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .info-card:nth-child(2) { animation-delay: 0.2s; }
+        .info-card:nth-child(3) { animation-delay: 0.4s; }
+
+        .info-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 48px rgba(59, 130, 246, 0.2);
+            border-color: #93c5fd;
+        }
+
+        .info-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .info-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #1e3a8a;
+        }
+
+        /* ENVIRONMENT PANEL */
+        .environment-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .sensor-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: scaleIn 0.8s ease-out;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .sensor-card:nth-child(2) { animation-delay: 0.15s; }
+        .sensor-card:nth-child(3) { animation-delay: 0.3s; }
+        .sensor-card:nth-child(4) { animation-delay: 0.45s; }
+
+        .sensor-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 12px 48px rgba(59, 130, 246, 0.2);
+            border-color: #93c5fd;
+        }
+
+        .sensor-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .sensor-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: #1e3a8a;
+        }
+
+        .sensor-label {
+            font-size: 1.1rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .sensor-status {
+            font-size: 0.85rem;
+            margin-top: 0.75rem;
+            padding: 0.4rem 1rem;
+            border-radius: 15px;
+            display: inline-block;
+            font-weight: 600;
+        }
+
+        .status-optimal { 
+            background: rgba(16, 185, 129, 0.2); 
+            color: #059669;
+        }
+        
+        .status-warning { 
+            background: rgba(245, 158, 11, 0.2); 
+            color: #d97706;
+        }
+        
+        .status-normal { 
+            background: rgba(59, 130, 246, 0.2); 
+            color: #2563eb;
+        }
+
+        .data-source {
+            font-size: 0.7rem;
+            margin-top: 0.5rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* STUDENTS PANEL */
+        .students-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .attendance-overview {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 3rem;
+            text-align: center;
+            animation: slideInLeft 0.8s ease-out;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            position: sticky;
+            top: 7rem;
+        }
+
+        .attendance-overview h3 {
+            font-size: 1.5rem;
+            color: #1e3a8a;
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+
+        .attendance-percentage {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin: 2rem 0;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .attendance-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(226, 232, 240, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 2rem 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .attendance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 15px;
+            transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .attendance-summary {
+            font-size: 1.1rem;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        .students-list {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 3rem;
+            animation: slideInRight 0.8s ease-out;
+            box-shadow: 0 8px 32px rgba(30, 58, 138, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .students-list h3 {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            margin: 1rem 0;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .student-item:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: translateX(10px);
+            border-color: #93c5fd;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.15);
+        }
+
+        .student-name {
+            font-weight: 600;
+            color: #1e3a8a;
+            font-size: 1.1rem;
+        }
+
+        .student-status {
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-present {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-absent {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Footer */
+        .copyright {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 2rem;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+            z-index: 10;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(60px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .students-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .attendance-overview {
+                position: relative;
+                top: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 3rem;
+            }
+            
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .navigation {
+                flex-direction: column;
+                gap: 0.25rem;
+                padding: 0.5rem;
+            }
+            
+            .nav-item {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .content-panel {
+                padding: 10rem 1.5rem 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Background Decorations -->
+        <div class="background-shapes">
+            <div class="floating-circle circle-1"></div>
+            <div class="floating-circle circle-2"></div>
+            <div class="floating-circle circle-3"></div>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="status-indicator">
+            <span class="status-dot" id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-item active" onclick="showPanel('home')">
+                <span>🏠</span> Home
+            </button>
+            <button class="nav-item" onclick="showPanel('environment')">
+                <span>🌡️</span> Environment
+            </button>
+            <button class="nav-item" onclick="showPanel('students')">
+                <span>👥</span> Students
+            </button>
+        </div>
+
+        <!-- Home Panel -->
+        <div class="content-panel active" id="home-panel">
+            <div class="home-content">
+                <h1 class="main-title">SMART CLASSROOM</h1>
+                <p class="subtitle">Real-time Monitoring & Attendance System</p>
+                
+                <div class="time-display" id="current-time"></div>
+                
+                <div class="class-info-grid">
+                    <div class="info-card">
+                        <div class="icon">📚</div>
+                        <h3>Course</h3>
+                        <div class="value">Vertically Integrated Projects</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="icon">👨‍🏫</div>
+                        <h3>Instructors</h3>
+                        <div class="value">Mehdi, Serrao, Kakani</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="icon">🎯</div>
+                        <h3>Project</h3>
+                        <div class="value">IoT Smart Classroom</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Environment Panel -->
+        <div class="content-panel" id="environment-panel">
+            <div class="environment-content">
+                <div class="sensor-grid">
+                    <div class="sensor-card">
+                        <span class="sensor-icon">🌡️</span>
+                        <div class="sensor-value" id="temperature">--°C</div>
+                        <div class="sensor-label">Temperature</div>
+                        <div class="sensor-status status-normal" id="temp-status">Loading...</div>
+                        <div class="data-source" id="temp-source"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <span class="sensor-icon">💨</span>
+                        <div class="sensor-value" id="gas">--</div>
+                        <div class="sensor-label">Gas/Smoke Trigger</div>
+                        <div class="sensor-status status-normal" id="gas-status">Loading...</div>
+                        <div class="data-source" id="gas-source"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <span class="sensor-icon">☀️</span>
+                        <div class="sensor-value" id="weather">--</div>
+                        <div class="sensor-label">Weather</div>
+                        <div class="sensor-status status-normal" id="weather-status">Loading...</div>
+                        <div class="data-source" id="weather-source"></div>
+                    </div>
+                    <div class="sensor-card">
+                        <span class="sensor-icon">💧</span>
+                        <div class="sensor-value" id="humidity">--%</div>
+                        <div class="sensor-label">Humidity</div>
+                        <div class="sensor-status status-normal" id="humidity-status">Loading...</div>
+                        <div class="data-source" id="humidity-source"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students Panel -->
+        <div class="content-panel" id="students-panel">
+            <div class="students-content">
+                <div class="attendance-overview">
+                    <h3>📊 Attendance Rate</h3>
+                    <div class="attendance-percentage" id="attendance-percentage">--%</div>
+                    <div class="attendance-bar">
+                        <div class="attendance-fill" id="attendance-fill" style="width: 0%"></div>
+                    </div>
+                    <p class="attendance-summary" id="attendance-summary">Loading...</p>
+                </div>
+                
+                <div class="students-list">
+                    <h3>👥 Student Attendance</h3>
+                    <div id="student-list">
+                        <div class="student-item">
+                            <span>Attendance data unavailable</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="copyright">
+            Made with ❤️ by Luminous Team | © 2025
+        </div>
+    </div>
+
+    <script>
+        let currentPanel = 'home';
+
+        // Update time display
+        function updateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('current-time').textContent = 
+                now.toLocaleString('en-US', options);
+        }
+
+        // Show panel with smooth transition
+        function showPanel(panelName) {
+            const panels = document.querySelectorAll('.content-panel');
+            const buttons = document.querySelectorAll('.nav-item');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.nav-item').classList.add('active');
+            
+            panels.forEach(panel => panel.classList.remove('active'));
+            document.getElementById(panelName + '-panel').classList.add('active');
+            
+            currentPanel = panelName;
+
+            if (panelName === 'environment') {
+                loadEnvironmentData();
+            } else if (panelName === 'students') {
+                loadStudentData();
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(isOnline, message) {
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            statusDot.className = `status-dot ${isOnline ? 'status-online' : 'status-offline'}`;
+            statusText.textContent = message;
+        }
+
+        // Read actual sensor state; never substitute demo readings.
+        async function getLiveSnapshot() {
+            const response = await fetch('/api/sensor', {cache:'no-store'});
+            if (!response.ok) throw new Error('Dashboard API unavailable');
+            return response.json();
+        }
+        function field(value, suffix = '') {
+            return typeof value === 'number' && Number.isFinite(value)
+                ? String(value) + suffix : 'Unavailable';
+        }
+        function setLabel(id, label, cssClass = 'status-normal') {
+            const el = document.getElementById(id);
+            el.textContent = label;
+            el.className = 'sensor-status ' + cssClass;
+        }
+        function source(id, name) {
+            document.getElementById(id).textContent = 'Source: ' + (name || 'unavailable');
+        }
+        async function loadEnvironmentData() {
+            try {
+                const data = await getLiveSnapshot();
+                updateStatus(true, 'Connected');
+                document.getElementById('temperature').textContent = field(data.temperature, '°C');
+                setLabel('temp-status', data.temperature == null ? 'Unavailable' :
+                    data.temperature > 25 ? 'Warm' : data.temperature < 18 ? 'Cool' : 'Optimal',
+                    data.temperature == null ? 'status-warning' : 'status-normal');
+                source('temp-source', data.data_sources?.temperature);
+
+                document.getElementById('gas').textContent =
+                    data.gas_status === 'Triggered' ? 'Triggered' :
+                    data.gas_status === 'No trigger' ? 'No trigger' : 'Unavailable';
+                setLabel('gas-status', data.gas_status || 'Unavailable',
+                    data.gas_status === 'Triggered' ? 'status-warning' : 'status-normal');
+                source('gas-source', data.data_sources?.gas);
+
+                document.getElementById('weather').textContent = data.weather || 'Unavailable';
+                setLabel('weather-status', data.weather ? 'Current' : 'Unavailable');
+                source('weather-source', data.data_sources?.weather);
+
+                document.getElementById('humidity').textContent = field(data.humidity, '%');
+                setLabel('humidity-status', data.humidity == null ? 'Unavailable' :
+                    data.humidity > 70 ? 'High' : data.humidity < 40 ? 'Low' : 'Comfortable',
+                    data.humidity == null ? 'status-warning' : 'status-normal');
+                source('humidity-source', data.data_sources?.humidity);
+            } catch (error) {
+                updateStatus(false, 'Connection Error');
+                ['temperature','gas','weather','humidity'].forEach(id =>
+                    document.getElementById(id).textContent = 'Unavailable');
+                ['temp-status','gas-status','weather-status','humidity-status'].forEach(id =>
+                    setLabel(id, 'Unavailable'));
+            }
+        }
+
+        async function loadStudentData() {
+            try {
+                const data = await getLiveSnapshot();
+                updateStatus(true, 'Connected');
+                const students = Array.isArray(data.students) ? data.students : [];
+                const known = typeof data.total_students === 'number';
+                const pct = known && typeof data.attendance_percentage === 'number'
+                    ? data.attendance_percentage : null;
+                document.getElementById('attendance-percentage').textContent =
+                    pct == null ? '--' : pct + '%';
+                document.getElementById('attendance-fill').style.width =
+                    pct == null ? '0%' : Math.min(100, Math.max(0, pct)) + '%';
+                document.getElementById('attendance-summary').textContent =
+                    !known ? 'Attendance data unavailable' :
+                    data.present_count + ' out of ' + data.total_students + ' students present';
+                const container = document.getElementById('student-list');
+                container.replaceChildren();
+                if (!known || students.length === 0) {
+                    const message = document.createElement('div');
+                    message.className = 'student-item';
+                    message.textContent = 'Attendance data unavailable';
+                    container.appendChild(message);
+                    return;
+                }
+                students.forEach((student, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'student-item';
+                    item.style.animation = `fadeInUp 0.5s ease-out ${index * 0.1}s both`;
+                    const name = document.createElement('span');
+                    name.className = 'student-name';
+                    name.textContent = student.name;
+                    const status = document.createElement('span');
+                    status.className = 'student-status status-' + (
+                        student.status === 'Present' ? 'present' : 'absent');
+                    status.textContent = student.status === 'Present' ? 'Present' : 'Absent';
+                    item.append(name, status);
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                updateStatus(false, 'Connection Error');
+                document.getElementById('attendance-percentage').textContent = '--';
+                document.getElementById('attendance-fill').style.width = '0%';
+                document.getElementById('attendance-summary').textContent = 'Attendance data unavailable';
+                document.getElementById('student-list').textContent = 'Attendance data unavailable';
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            updateStatus(false, 'Checking connection...');
+            
+            // Initial load
+            loadEnvironmentData();
+            
+            // Refresh data every 5 seconds
+            setInterval(() => {
+                if (currentPanel === 'environment') {
+                    loadEnvironmentData();
+                } else if (currentPanel === 'students') {
+                    loadStudentData();
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

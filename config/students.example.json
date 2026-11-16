@@ -1,0 +1,5 @@
+{
+  "students": [
+    {"id": "demo-001", "name": "Example Student", "model_label": "example-student"}
+  ]
+}
